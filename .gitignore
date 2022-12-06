@@ -1,5 +1,9 @@
 2020/*
 2021/*
+2022/*
+runner/*
+!main.py
+!inputs/.gitkeep
 !aoc*.*
 !day*.*
 !common.py
