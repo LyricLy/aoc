@@ -22,10 +22,11 @@ def get_example(year, day, part):
             g, x = f.read().split("::*::")
     except FileNotFoundError:
         s = session.get(f"https://adventofcode.com/{year}/day/{day}").text
-        regex = r"For example.*?:.*?<pre><code>(.*?)</code></pre>.*?<code><em>(.*?)</em></code>" if part == 1 else r"For example.*?:.*?<pre><code>(.*?)</code></pre>.*?Part Two.*?<code><em>(.*?)</em></code>"
+        regex = r"For example.*?:.*?<pre><code>(.*?)</code></pre>.*?<code><em>(.*?)</em></code>" if part == 1 else r"For example.*?:.*?<pre><code>(.*?)</code></pre>.*?Part Two.*<code><em>(.*?)</em></code>"
         if not (m := re.search(regex, s, re.DOTALL)):
             return None
         g, x = m.groups()
+        x = input(f"Example answer ({x}): ") or x
         if not g.endswith("\n"):
             g = f"{g}\n"
         with open(path, "w") as f:
@@ -63,42 +64,51 @@ def submit(year, day, part, data, wanted_type):
     if "That's not the right answer." in r.text:
         wrong[year, day, part].add(data)
         print("no good, sleeping off")
-        time.sleep(61)
+        time.sleep(60)
     elif "You gave an answer too recently" in r.text:
-        print("moved too quickly. sleeping difference; retrying after")
+        print("moved too quickly. sleeping difference")
         m, s = re.search(r"You have (?:(\d+)m )?(\d+)s left to wait", r.text).groups()
         time.sleep((int(m) if m else 0)*60+int(s))
-        return True  # retry
     elif "That's the right answer" in r.text:
         if part == 1:
             part_one = data
         print("got it!")
+        return True
 
 
 def do_day(year, day, part_start, file):
     for part in range(part_start, 3):
         last = os.stat(file).st_mtime
         skip = False
+        print(f"starting part {part}")
         while True:
             t = os.stat(file).st_mtime
             if t != last or skip:
                 last = t
                 try:
-                    mod = importlib.reload(importlib.import_module(file.removesuffix(".py")))
-                except SyntaxError:
-                    print("syntax error in solution, refusing")
-                    traceback.print_exc()
-                    continue
-                g, x = get_example(year, day, part)
-                try:
-                    if (v := mod.go(g)) != x:
-                        print(f"failed example (wanted {x}, got {v}), refusing")
-                        continue
+                    spec = importlib.util.spec_from_file_location("aoc", file)
+                    mod = importlib.util.module_from_spec(spec)
                 except:
-                    print("caught exception in solution, refusing")
+                    print("solution doesn't compile, refusing")
                     traceback.print_exc()
                     continue
-                skip = submit(year, day, part, mod.go(get_input(year, day)), type(x))
+                if e := get_example(year, day, part):
+                    g, x = e
+                    try:
+                        if (v := mod.go(g)) != x:
+                            print(f"failed example (wanted {x}, got {v}), refusing")
+                            continue
+                    except:
+                        print("caught exception while testing, refusing")
+                        traceback.print_exc()
+                        continue
+                try:
+                    if submit(year, day, part, mod.go(get_input(year, day)), type(x)):
+                        break
+                except:
+                    print("caught exception, refusing")
+                    traceback.print_exc()
+                    continue
 
 if __name__ == "__main__":
     now = datetime.datetime.now(ZoneInfo("America/New_York"))
