@@ -62,7 +62,6 @@ def submit(year, day, part, data, wanted_type):
         return print(f"{data} was part 1 answer, refusing")
     print(f"trying {data}")
     r = session.post(f"https://adventofcode.com/{year}/day/{day}/answer", data={"level": part, "answer": data})
-    print(r.text)
     if "That's not the right answer." in r.text:
         wrong[year, day, part].add(data)
         print("no good, sleeping off")
@@ -103,6 +102,9 @@ def do_day(year, day, part_start, file):
                         print("caught exception while testing, refusing")
                         traceback.print_exc()
                         continue
+                else:
+                    x = object()
+                print("executing on main input...")
                 try:
                     if submit(year, day, part, mod.go(get_input(year, day)), type(x)):
                         break
