@@ -10,6 +10,8 @@ import argparse
 from collections import defaultdict
 from zoneinfo import ZoneInfo
 
+sys.path.append(os.getcwd())
+
 with open("session") as f:
     token = f.read().strip()
 session = requests.Session()
@@ -86,8 +88,7 @@ def do_day(year, day, part_start, file):
             if t != last or skip:
                 last = t
                 try:
-                    spec = importlib.util.spec_from_file_location("aoc", file)
-                    mod = importlib.util.module_from_spec(spec)
+                    mod = importlib.reload(importlib.import_module(file.removesuffix(".py")))
                 except:
                     print("solution doesn't compile, refusing")
                     traceback.print_exc()
