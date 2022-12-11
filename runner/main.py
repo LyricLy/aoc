@@ -22,6 +22,7 @@ def get_example(year, day, part):
     try:
         with open(path) as f:
             g, x = f.read().split("::*::")
+        x = x.removesuffix("\n")
     except FileNotFoundError:
         s = session.get(f"https://adventofcode.com/{year}/day/{day}").text
         regex = r"For example.*?:.*?<pre><code>(.*?)</code></pre>.*?<code><em>(.*?)</em></code>" if part == 1 else r"For example.*?:.*?<pre><code>(.*?)</code></pre>.*?Part Two.*<code><em>(.*?)</em></code>"

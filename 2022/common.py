@@ -113,7 +113,7 @@ class Grid(Generic[T]):
     def __str__(self) -> str:
         return self._repr(str)
 
-    def count(self, pred: Callable[[T], bool] = lambda _: True) -> int:
+    def count(self, pred: Callable[[T], int] = lambda _: 1) -> int:
         return sum(pred(x) for x in self.values())
 
     def take(self, ps: Iterable[Point]) -> list[T]:
