@@ -32,6 +32,13 @@ def parens_optional_meth(f: Callable[Concatenate[Any, Point, P], T]) -> Callable
     return wrapper
 
 
+def irange(left, right):
+    if left <= right:
+        return range(left, right+1)
+    else:
+        return range(left, right-1, -1)
+
+
 orthagonals = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 diagonals = [(1, -1), (1, 1), (-1, 1), (-1, -1)]
 directions = orthagonals + diagonals
