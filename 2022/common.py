@@ -112,7 +112,7 @@ class Grid(Generic[T]):
                 st += f"{v:>{l}} "
             s.append(st)
             st = ""
-        return "\n".join(s)
+        return "\n" + "\n".join(s) + "\n"
 
     def __repr__(self) -> str:
         return self._repr(repr)
