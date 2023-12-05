@@ -1,6 +1,7 @@
 20*/*
 runner/*
 !runner/main.py
+!runner/README.md
 !inputs/.gitkeep
 !aoc*.*
 !day*.*
