@@ -1,4 +1,5 @@
 20*/*
+__pycache__
 !aoc*.*
 !day*.*
 !common/
