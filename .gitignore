@@ -1,6 +1,8 @@
 20*/*
 __pycache__
+target/
+Cargo.lock
 !aoc*.*
-!day*.*
+!day*
 !common/
 !run.py
