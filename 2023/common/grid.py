@@ -120,6 +120,14 @@ class Grid(Generic[T]):
     def __str__(self) -> str:
         return self._repr(str)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Grid):
+            return NotImplemented
+        return (self.width, self.height, self.data) == (other.width, other.height, other.data)
+
+    def __hash__(self) -> int:
+        return hash((self.width, self.height, tuple(self.data)))
+
     def count(self, pred: Callable[[T], int] = lambda _: 1) -> int:
         return sum(pred(x) for x in self.values())
 
