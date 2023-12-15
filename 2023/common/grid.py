@@ -7,7 +7,6 @@ from typing import TypeVar, Callable, Any, Generic, Optional, Iterable, Iterator
 
 T = TypeVar("T")
 G = TypeVar("G")
-P = ParamSpec('P')
 Dir = tuple[int, int]
 Point = tuple[int, int]
 
