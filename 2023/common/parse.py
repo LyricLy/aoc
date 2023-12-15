@@ -40,7 +40,7 @@ class Aoc:
         if s := self._section():
             return self.split(s)
 
-        for x in ["|", "=", "->", ";", ",", "-", " "]:
+        for x in ["|", "->", ";", ",", "=", "-", " "]:
             if x in self.body:
                 return self.split(x)
 
