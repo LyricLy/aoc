@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import functools
-from typing import TypeVar, Callable, Any, Generic, overload, Optional, Iterable, Iterator, ParamSpec, Concatenate
+from typing import TypeVar, Callable, Any, Generic, Optional, Iterable, Iterator
 
 
 T = TypeVar("T")
@@ -10,26 +10,6 @@ G = TypeVar("G")
 P = ParamSpec('P')
 Dir = tuple[int, int]
 Point = tuple[int, int]
-
-def parens_optional(f: Callable[Concatenate[Point, P], T]) -> Callable[..., T]:
-    @functools.wraps(f)
-    def wrapper(*args: Any) -> T:
-        match args:
-            case ((_, _) as t, *xs) | ((_, _, *xs) as t):
-                return f(t, *xs)  # type: ignore
-            case _:
-                raise TypeError(f"function '{f.__name__}' expects a point")
-    return wrapper
-
-def parens_optional_meth(f: Callable[Concatenate[Any, Point, P], T]) -> Callable[..., T]:
-    @functools.wraps(f)
-    def wrapper(*args: Any) -> T:
-        match args:
-            case ((s, _, _, *xs) as t) | (s, (_, _) as t, *xs):
-                return f(s, t, *xs)  # type: ignore
-            case _:
-                raise TypeError(f"function '{f.__name__}' expects a point")
-    return wrapper
 
 
 def irange(left, right):
@@ -52,7 +32,6 @@ def is_orthagonal(d: Dir) -> bool:
 def is_diagonal(d: Dir) -> bool:
     return not is_orthagonal(d)
 
-@parens_optional
 def offset(p: Point, d: Dir) -> Point:
     return p[0]+d[0], p[1]+d[1]
 
@@ -73,12 +52,10 @@ class Grid(Generic[T]):
         else:
             self.data = [l for _ in range(w*h)]
 
-    @parens_optional_meth
     def orthagonals(self, p: Point):
         for d in orthagonals:
             yield offset(p, d)
 
-    @parens_optional_meth
     def adjacent(self, p: Point):
         for d in directions:
             yield offset(p, d)
@@ -156,7 +133,6 @@ class Grid(Generic[T]):
     def columns(self) -> list[list[Point]]:
         return [[(x, y) for y in range(self.height)] for x in range(self.width)]
 
-    @parens_optional_meth
     def blit(self, point: Point, other: Grid[T]) -> Grid[T]:
         for p in other:
             try:
@@ -224,7 +200,7 @@ class Grid(Generic[T]):
         return grid  # type: ignore
 
     @classmethod
-    def parse(cls, s: str, convert: Callable[[str], T] = lambda x: x, split: Callable[[str], Iterable[str]] = list) -> Grid[T]:
+    def parse(cls, s: str, convert: Callable[[str], T], split: Callable[[str], Iterable[str]] = list) -> Grid[T]:
         return cls.from_list(map(convert, split(r)) for r in s.splitlines())
 
     @classmethod

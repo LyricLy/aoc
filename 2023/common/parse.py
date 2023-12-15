@@ -138,8 +138,8 @@ class Aoc:
         return dict(self.items)  # type: ignore
 
     @property
-    def grid(self):
-        return Grid.parse(self.body)
+    def grid(self) -> Grid[str]:
+        return Grid.parse(self.body, lambda x: x)
 
 def get_input():
     with open(sys.argv[1]) as f:
