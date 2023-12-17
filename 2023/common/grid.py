@@ -199,8 +199,8 @@ class Grid(Generic[T]):
         return grid  # type: ignore
 
     @classmethod
-    def parse(cls, s: str, convert: Callable[[str], T], split: Callable[[str], Iterable[str]] = list) -> Grid[T]:
-        return cls.from_list(map(convert, split(r)) for r in s.splitlines())
+    def parse(cls, s: str) -> Grid[str]:
+        return cls.from_list(s.splitlines())
 
     @classmethod
     def from_list(cls, l: Iterable[Iterable[T]]) -> Grid[T]:

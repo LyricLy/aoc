@@ -139,7 +139,7 @@ class Aoc:
 
     @property
     def grid(self) -> Grid[str]:
-        return Grid.parse(self.body, lambda x: x)
+        return Grid.parse(self.body)
 
 def get_input():
     with open(sys.argv[1]) as f:
