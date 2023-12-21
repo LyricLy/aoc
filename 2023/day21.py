@@ -38,7 +38,6 @@ def ahead_backslash(p):
 n = int(sys.argv[2])
 count = (n - half) // a.width
 
-# m = {}
 frontier = [*a.orthagonals((half, half))]
 seen = set()
 while frontier:
@@ -49,26 +48,15 @@ while frontier:
     frontier.extend({ppp for pp in a.orthagonals(p) for ppp in a.orthagonals(pp) if a[pp] not in (None, "#") and a[ppp] not in (None, "#")})
     if (q := by_quadrant(p, 0, 0)) and behind_slash(q):
         top_left += 1
-        # m[p] = "⌜"
     elif (q := by_quadrant(p, 1, 0)) and ahead_backslash(q):
         top_right += 1
-        # m[p] = "⌝"
     elif (q := by_quadrant(p, 0, 1)) and behind_backslash(q):
         bottom_left += 1
-        # m[p] = "⌞"
     elif (q := by_quadrant(p, 1, 1)) and ahead_slash(q):
         bottom_right += 1
-        # m[p] = "⌟"
     else:
-        # m[p] = "*"
         centre += 1
 
-# for k, v in m.items():
-#     a[k] = v
-# print(a)
-# exit(0)
-
-# m = {}
 frontier = [(half, half)]
 seen = set()
 while frontier:
@@ -79,24 +67,14 @@ while frontier:
     frontier.extend({ppp for pp in a.orthagonals(p) for ppp in a.orthagonals(pp) if a[pp] not in (None, "#") and a[ppp] not in (None, "#")})
     if (q := by_quadrant(p, 0, 0)) and behind_slash(q):
         top_left_alt += 1
-        # m[p] = "⌜"
     elif (q := by_quadrant(p, 1, 0)) and ahead_backslash(q):
         top_right_alt += 1
-        # m[p] = "⌝"
     elif (q := by_quadrant(p, 0, 1)) and behind_backslash(q):
         bottom_left_alt += 1
-        # m[p] = "⌞"
     elif (q := by_quadrant(p, 1, 1)) and ahead_slash(q):
-        # m[p] = "⌟"
         bottom_right_alt += 1
     else:
-        # m[p] = "*"
         centre_alt += 1
-
-# for k, v in m.items():
-#     a[k] = v
-# print(a)
-# exit(0)
 
 # The finale.
 print(
