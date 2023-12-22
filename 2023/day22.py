@@ -61,7 +61,7 @@ for i, ts in bottom_levels.items():
 c = 0
 for x in list(deps.keys()):
     dropped = {x}
-    frontier = deque(revdeps[x])
+    frontier = revdeps[x].copy()
     while frontier:
         f = frontier.pop()
         if all(x in dropped for x in deps[f]):
