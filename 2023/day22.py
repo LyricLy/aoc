@@ -1,14 +1,10 @@
+
 from common import *
 from collections import defaultdict, deque
 a = get_input()
 
 bottom_levels = defaultdict(list)
 top_levels = defaultdict(list)
-
-def overlaps(one, two):
-    ((x1_1, y1_1), (x2_1, y2_1)) = one
-    ((x1_2, y1_2), (x2_2, y2_2)) = two
-    return x1_1 <= x2_2 and x2_1 >= x1_2 and y1_1 >= y2_2 and y2_1 <= y1_2
 
 class Point:
     def __init__(self, x1, y1, z1, x2, y2, z2):
@@ -48,10 +44,10 @@ for l in a:
     top_levels[z2].append(p)
     bottom_levels[z1].append(p)
 
-for _ in range(500):
-    for _, ts in sorted(top_levels.items()):
-        for t in ts:
-            t.drop()
+for _, ts in sorted(bottom_levels.items()):
+    for t in ts[:]:
+        t.drop()
+
 
 deps = {}
 revdeps = defaultdict(list)
