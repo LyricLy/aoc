@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import functools
-from typing import TypeVar, Callable, Any, Generic, Optional, Iterable, Iterator
+from typing import TypeVar, Callable, Any, Generic, Optional, Iterable, Iterator, Mapping
 
 
 T = TypeVar("T")
@@ -41,21 +41,25 @@ def invert(d: Dir) -> Dir:
 class Grid(Generic[T]):
     data: list[T]
 
-    def __init__(self, w: int, h: int, l: T | list[T]):
+    def __init__(self, w: int, h: int, l: T | Callable[[int, int], T] | list[T]):
         self.width = w
         self.height = h
         if isinstance(l, list):
             if w*h != len(l):
                 raise ValueError(f"{w}*{h} = {w*h} but only {len(l)} elements provided")
             self.data = l
+        elif callable(l):
+            self.data = [l(x, y) for y in range(h) for x in range(w)]
         else:
             self.data = [l for _ in range(w*h)]
 
-    def orthagonals(self, p: Point):
+    @staticmethod
+    def orthagonals(p: Point):
         for d in orthagonals:
             yield offset(p, d)
 
-    def adjacent(self, p: Point):
+    @staticmethod
+    def adjacent(p: Point):
         for d in directions:
             yield offset(p, d)
 
@@ -65,10 +69,13 @@ class Grid(Generic[T]):
     def __contains__(self, p: Point) -> bool:
         return 0 <= p[0] < self.width and 0 <= p[1] < self.height
 
+    def get_unchecked(self, p: Point) -> T:
+        return self.data[p[1]*self.width+p[0]]
+
     def __getitem__(self, p: Point) -> Optional[T]:
         if p not in self:
             return None
-        return self.data[p[1]*self.width+p[0]]
+        return self.get_unchecked(p)
 
     def __setitem__(self, p: Point, x: T):
         if p not in self:
@@ -79,6 +86,8 @@ class Grid(Generic[T]):
         return ((x, y) for y in range(self.height) for x in range(self.width))
 
     def _repr(self, f: Callable[[object], str]) -> str:
+        if not self.data:
+            return "<empty grid>"
         m = self.copy().map(f)
         l = max(map(len, m.values()))
         s = []
@@ -119,8 +128,8 @@ class Grid(Generic[T]):
         return self.take(self)
 
     def map(self, f: Callable[[T], G]) -> Grid[G]:
-        for i in range(len(self.data)):
-            self.data[i] = f(self.data[i])  # type: ignore
+        for i, x in enumerate(self.data):
+            self.data[i] = f(x)  # type: ignore
         return self  # type: ignore
 
     def copy(self) -> Grid[T]:
@@ -135,68 +144,62 @@ class Grid(Generic[T]):
     def blit(self, point: Point, other: Grid[T]) -> Grid[T]:
         for p in other:
             try:
-                self[offset(p, point)] = other[p]  # type: ignore
+                self[offset(p, point)] = other.get_unchecked(p)
             except IndexError:
                 pass
         return self
 
-    def concat(self, *others: Grid[T]) -> Grid[T]:
-        summands = self, *others
+    def concat(*summands: Grid[T]) -> Grid[T]:
         width = sum(x.width for x in summands)
-        height = self.height
-        r: Grid[T | None] = Grid(width, height, None)
+        height = summands[0].height if summands else 0
+        r: Grid[T] = Grid(width, height, None)  # type: ignore
         o = 0
         for grid in summands:
             if grid.height != height:
                 raise ValueError("concat arguments differ in height")
             for x, y in grid:
-                r[x+o, y] = grid[x, y]
+                r[x+o, y] = grid.get_unchecked((x, y))
             o += grid.width
-        return r  # type: ignore
+        return r
 
-    def vconcat(self, *others: Grid[T]) -> Grid[T]:
-        summands = self, *others
-        width = self.width
+    def vconcat(*summands: Grid[T]) -> Grid[T]:
+        width = summands[0].width if summands else 0
         height = sum(x.height for x in summands)
-        r: Grid[T | None] = Grid(width, height, None)
+        r: Grid[T] = Grid(width, height, None)  # type: ignore
         o = 0
         for grid in summands:
             if grid.width != width:
                 raise ValueError("vconcat arguments differ in width")
             for x, y in grid:
-                r[x, y+o] = grid[x, y]
+                r[x, y+o] = grid.get_unchecked((x, y))
             o += grid.height
-        return r  # type: ignore
+        return r
 
     def flip(self) -> Grid[T]:
         for y in range(self.height):
             for x in range(self.width//2):
+                us = x, y
                 them = self.width-x-1, y
-                self[x, y], self[them] = self[them], self[x, y]  # type: ignore
+                self[us], self[them] = self.get_unchecked(them), self.get_unchecked(us)
         return self
 
     def vflip(self) -> Grid[T]:
         for x in range(self.width):
             for y in range(self.height//2):
+                us = x, y
                 them = x, self.height-y-1
-                self[x, y], self[them] = self[them], self[x, y]  # type: ignore
+                self[us], self[them] = self.get_unchecked(them), self.get_unchecked(us)
         return self
 
     def rot(self) -> Grid[T]:
         w = self.height
         h = self.width
-        grid: Grid[T | None] = Grid(w, h, None)
-        for x, y in self:
-            grid[w-y-1, x] = self[x, y]
-        return grid  # type: ignore
+        return Grid(w, h, lambda x, y: self.get_unchecked((y, h-x-1)))
 
     def lrot(self) -> Grid[T]:
         w = self.height
         h = self.width
-        grid: Grid[T | None] = Grid(w, h, None)
-        for x, y in self:
-            grid[y, h-x-1] = self[x, y]
-        return grid  # type: ignore
+        return Grid(w, h, lambda x, y: self.get_unchecked((w-y-1, x)))
 
     @classmethod
     def parse(cls, s: str) -> Grid[str]:
@@ -224,3 +227,33 @@ class Grid(Generic[T]):
 
     def to_list(self) -> list[list[T]]:
         return [[self.data[y*self.width+x] for x in range(self.width)] for y in range(self.height)]
+
+    @classmethod
+    def from_dict(cls, d: Mapping[Point, T]) -> Grid[T]:
+        if not d:
+            return cls(0, 0, None)
+        min_x = float("inf")
+        max_x = float("-inf")
+        min_y = float("inf")
+        max_y = float("-inf")
+        for x, y in d.keys():
+            min_x = min(min_x, x)
+            max_x = max(max_x, x)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y)
+        return Grid(max_x-min_x+1, max_y-min_y+1, lambda x, y: d[x+min_x, y+min_y])  # type: ignore
+
+    def tile(self) -> SparseGrid[T]:
+        return SparseGrid(lambda p: self.get_unchecked((p[0] % self.width, p[1] % self.height)))
+
+    def isolate(self, using: G) -> SparseGrid[T | G]:
+        return SparseGrid(lambda _: using, {p: self.get_unchecked(p) for p in self})
+
+
+class SparseGrid(Generic[T], dict[Point, T]):
+    def __init__(self, f: Callable[[Point], T], *args, **kwargs):
+        self.f = f
+        super().__init__(*args, **kwargs)
+
+    def __missing__(self, key: Point) -> T:
+        return self.f(key)
