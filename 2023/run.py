@@ -27,4 +27,4 @@ if not os.path.exists("input.txt"):
     with open("input.txt", "w") as f:
         f.write(s)
 
-subprocess.run(["python", "thing.py", "example.txt" if len(sys.argv) <= 1 else "input.txt"])
+subprocess.run(["python3", "thing.py", "example.txt" if len(sys.argv) <= 1 else "input.txt"])
