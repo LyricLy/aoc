@@ -87,10 +87,7 @@ class Aoc:
         return [Aoc(x) for x in self.body.split(sep)]
 
     def __iter__(self):
-        try:
-            return iter([x.num for x in self.items])
-        except UsageError:
-            return iter(self.items)
+        return (x.num if len(x.nums == 1) else x for x in self.items)
 
     def __getitem__(self, i):
         if isinstance(i, (int, slice)):
