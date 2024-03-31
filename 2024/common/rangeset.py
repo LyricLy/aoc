@@ -1,3 +1,26 @@
+"""A set backed by a list of ranges that stores contiguous integers efficiently.
+
+This module exports a single type `rangeset` that matches the interface of `set` with the following changes and additions:
+- Only `int`s can be stored in the set. Otherwise, things go very wrong very quickly.
+- The `rangeset` constructor, as well as any method that accepts an `Iterable[int]`, special-cases `range` objects, giving performance that is constant time in the size of the range. 
+- `rangeset` does not subclass `set` or `collections.abc.Set`
+    - I couldn't be bothered to make the types for this line up and it's not that relevant to aoc
+- `rangeset.from_ranges` builds a range set from a list of ranges represented as 2-tuples. The ranges passed must be non-overlapping, non-empty, and sorted from lowest to highest. This condition is not checked.
+- The comparison operators `>`, `<`, `<=`, `>=` work only with other `rangeset`s, not all `Set`s
+    - `issubset`, `issuperset`, and `isdisjoint` still work with iterables like usual
+- The type is hashable, despite being mutable. Be careful!
+    - `__eq__` and `__hash__` are not compatible with other `Set`s
+- Empty `rangeset`s identify themselves as `rangeset()` instead of `set()` in `__repr__`, and ranges are collapsed in the representation: `{1, 2, 3}` is shown as `{1..3}`.
+- `__getitem__` can be used to access the values in sorted order. For example `s[0]` accesses the smallest int in the set and `s[-1]` the largest. Note that slicing is not currently supported.
+- `rangeset.union()` and `rangeset.symmetric_difference()` can be used without arguments, returning empty rangesets.
+- `rangeset.symmetric_difference` can be used with other numbers of arguments than 2.
+- `rangeset.discard` now returns a bool indicating whether or not the element was found in the set before discarding.
+- Set operators such as `|` and `&` work with any `Iterable[int]`, not just other `rangeset`s
+- `rangeset.affine_transform` is provided to apply an affine transformation on the endpoints of each range
+    - Note that this is slightly different to mapping: `[x*2 for x in rangeset(range(5))]` is `[0, 2, 4, 6, 8]`, while `list(rangeset(range(5)).affine_transform(times=2))` is `[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
+- `rangeset.sum` is a more efficient way to sum a range set than `sum()`, using the well-known closed form for the sum of an integer range
+"""
+
 from __future__ import annotations
 
 import bisect
@@ -44,7 +67,7 @@ class rangeset:
         rs.ranges = ranges
         return rs
 
-    # for debugging, never called in normal operation
+    # for debugging; never called in normal operation
     def _sanity_check(self):
         import itertools
         for (a, b), (c, d) in itertools.pairwise(self.ranges):
@@ -140,7 +163,7 @@ class rangeset:
     def __repr__(self):
         if not self:
             return "rangeset()"
-        return f"{{{', '.join(f'{start}..{stop}' for start, stop in self.ranges)}}}"
+        return f"{{{', '.join(f'{start}..{stop-1}' for start, stop in self.ranges)}}}"
 
     def __bool__(self):
         return bool(self.ranges)
