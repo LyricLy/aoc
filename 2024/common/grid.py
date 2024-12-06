@@ -46,6 +46,10 @@ class GridView[T](MappingView):
     def __len__(self) -> int:
         return len(self.grid)
 
+    @property
+    def _mapping(self) -> Mapping[Point, T]:
+        return self.grid
+
 class GridKeys(GridView, KeysView[Point]):
     def __contains__(self, p: object) -> bool:
         return p in self.grid
