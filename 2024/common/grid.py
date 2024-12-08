@@ -155,7 +155,7 @@ class Grid[T](Mapping[Point, T]):
     def __hash__(self) -> int:
         return hash((self.width, self.height, tuple(self.data)))
 
-    def count(self, pred: Callable[[T], int] = lambda _: 1) -> int:
+    def count(self, pred: Callable[[T], int] = bool) -> int:
         return sum(pred(x) for x in self.values())
 
     def take(self, ps: Iterable[Point]) -> list[T]:
