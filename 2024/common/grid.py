@@ -7,8 +7,8 @@ from typing import TypeVar, Callable, Any, Generic, Iterable, Iterator, Mapping,
 
 
 __all__ = (
-    "orthagonals", "diagonals", "directions",
-    "is_normal", "is_orthagonal", "is_diagonal",
+    "orthogonals", "diagonals", "directions",
+    "is_normal", "is_orthogonal", "is_diagonal",
     "offset", "invert", "Grid", "SparseGrid",
 )
 
@@ -17,18 +17,18 @@ Dir = tuple[int, int]
 Point = tuple[int, int]
 
 
-orthagonals = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+orthogonals = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 diagonals = [(1, -1), (1, 1), (-1, 1), (-1, -1)]
-directions = orthagonals + diagonals
+directions = orthogonals + diagonals
 
 def is_normal(d: Dir) -> bool:
     return all(x in (-1, 0, 1) for x in d)
 
-def is_orthagonal(d: Dir) -> bool:
+def is_orthogonal(d: Dir) -> bool:
     return any(x == 0 for x in d)
 
 def is_diagonal(d: Dir) -> bool:
-    return not is_orthagonal(d)
+    return not is_orthogonal(d)
 
 def offset(p: Point, d: Dir) -> Point:
     return p[0]+d[0], p[1]+d[1]
@@ -92,8 +92,8 @@ class Grid[T](Mapping[Point, T]):
             self.data = [l for _ in range(w*h)]
 
     @staticmethod
-    def orthagonals(p: Point):
-        for d in orthagonals:
+    def orthogonals(p: Point):
+        for d in orthogonals:
             yield offset(p, d)
 
     @staticmethod
