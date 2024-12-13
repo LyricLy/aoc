@@ -94,11 +94,12 @@ class Aoc:
             return self.items[i]
         if isinstance(i, str):
             try:
-                v = self.val_map
+                v = self.header_map
             except:
-                return self.header_map[i]
+                return self.val_map[i]
             else:
                 return v[i]  # type: ignore
+        raise TypeError(f"Aoc indices must be integers or strings, not '{type(i).__name__}'")
 
     def __len__(self):
         return len(self.items)
