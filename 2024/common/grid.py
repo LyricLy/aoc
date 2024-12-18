@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import functools
 from collections.abc import Mapping, MappingView, KeysView, ValuesView, ItemsView
-from typing import Callable, Iterable, Iterator, Mapping
+from typing import Callable, Iterable, Iterator, Mapping, overload, TYPE_CHECKING
 
 from .pathfinding import pathfind
 
@@ -14,9 +14,10 @@ __all__ = (
     "offset", "invert", "Grid", "SparseGrid",
 )
 
-
 Dir = tuple[int, int]
 Point = tuple[int, int]
+if TYPE_CHECKING:
+    Slice = slice[int | None, int | None, int | None]
 
 
 orthogonals = [(0, -1), (1, 0), (0, 1), (-1, 0)]
@@ -109,17 +110,39 @@ class Grid[T](Mapping[Point, T]):
     def __contains__(self, p: object) -> bool:
         match p:
             case tuple((int(x), int(y))):
-                return 0 <= p[0] < self.width and 0 <= p[1] < self.height
+                return 0 <= x < self.width and 0 <= y < self.height
             case _:
                 return False
 
     def get_unchecked(self, p: Point) -> T:
         return self.data[p[1]*self.width+p[0]]
 
-    def __getitem__(self, p: Point) -> T | None:
-        if p not in self:
-            return None
-        return self.get_unchecked(p)
+    @overload
+    def __getitem__(self, p: Point) -> T | None: ...
+    @overload
+    def __getitem__(self, p: tuple[int, Slice] | tuple[Slice, int]) -> list[T]: ...
+    @overload
+    def __getitem__(self, p: tuple[Slice, Slice]) -> Grid[T]: ...
+    def __getitem__(self, p: tuple[int | Slice, int | Slice]) -> T | None | list[T] | Grid[T]:
+        x, y = p
+        x_is_int = isinstance(x, int)
+        y_is_int = isinstance(y, int)
+        if x_is_int and y_is_int:
+            # inline __contains__ and get_unchecked for efficiency
+            if 0 <= x < self.width and 0 <= y < self.height:
+                return self.data[y*self.width+x]
+        elif x_is_int:
+            return self.take(self.columns()[x][y])  # type: ignore
+        elif y_is_int:
+            return self.take(self.rows()[y][x])
+        else:
+            xr = range(*x.indices(self.width))
+            yr = range(*y.indices(self.height))
+            g: Grid[T] = Grid(len(xr), len(yr), None)  # type: ignore
+            for j1, j2 in enumerate(yr):
+                for i1, i2 in enumerate(xr):
+                    g[i1, j1] = self.get_unchecked((i2, j2))
+            return g
 
     def __setitem__(self, p: Point, x: T):
         if p not in self:
@@ -165,7 +188,7 @@ class Grid[T](Mapping[Point, T]):
         for p in ps:
             if p not in self:
                 raise IndexError(f"out of bounds point {p} in take sequence")
-            l.append(self[p])
+            l.append(self.get_unchecked(p))
         return l
 
     def extract(self, what: T, repl: T) -> Point:
@@ -190,7 +213,7 @@ class Grid[T](Mapping[Point, T]):
         return self  # type: ignore
 
     def copy(self) -> Grid[T]:
-        return type(self)(self.width, self.height, self.data.copy())
+        return Grid(self.width, self.height, self.data.copy())
 
     def rows(self) -> list[list[Point]]:
         return [[(x, y) for x in range(self.width)] for y in range(self.height)]
@@ -262,12 +285,12 @@ class Grid[T](Mapping[Point, T]):
         end = end or (self.width-1, self.height-1)
         return pathfind(start, lambda p: p == end, lambda p: [(x, 1) for x in Grid.orthogonals(p) if self[x] == empty], lambda p: sum(abs(x - y) for x, y in zip(start, p)))
 
-    @classmethod
-    def parse(cls: type[Grid], s: str) -> Grid[str]:
-        return cls.from_list(s.splitlines())
+    @staticmethod
+    def parse(s: str) -> Grid[str]:
+        return Grid.from_list(s.splitlines())
 
-    @classmethod
-    def from_list(cls, l: Iterable[Iterable[T]]) -> Grid[T]:
+    @staticmethod
+    def from_list(l: Iterable[Iterable[T]]) -> Grid[T]:
         if not l:
             raise ValueError("empty list")
         w = None
@@ -284,15 +307,15 @@ class Grid[T](Mapping[Point, T]):
                 raise ValueError("inconsistent row lengths")
             h += 1
         assert w is not None
-        return cls(w, h, data)
+        return Grid(w, h, data)
 
     def to_list(self) -> list[list[T]]:
         return [[self.data[y*self.width+x] for x in range(self.width)] for y in range(self.height)]
 
-    @classmethod
-    def from_dict(cls, d: Mapping[Point, T]) -> Grid[T]:
+    @staticmethod
+    def from_dict(d: Mapping[Point, T]) -> Grid[T]:
         if not d:
-            return cls(0, 0, [])
+            return Grid(0, 0, [])
         min_x = float("inf")
         max_x = float("-inf")
         min_y = float("inf")

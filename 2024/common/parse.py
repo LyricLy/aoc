@@ -96,7 +96,7 @@ class Aoc:
             try:
                 v = self.header_map
             except:
-                return self.val_map[i]
+                return self.val_map[i]  # type: ignore
             else:
                 return v[i]  # type: ignore
         raise TypeError(f"Aoc indices must be integers or strings, not '{type(i).__name__}'")
