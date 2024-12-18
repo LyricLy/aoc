@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import functools
 from collections.abc import Mapping, MappingView, KeysView, ValuesView, ItemsView
-from typing import TypeVar, Callable, Any, Generic, Iterable, Iterator, Mapping, Self
+from typing import Callable, Iterable, Iterator, Mapping
 
 
 __all__ = (
