@@ -5,6 +5,8 @@ import functools
 from collections.abc import Mapping, MappingView, KeysView, ValuesView, ItemsView
 from typing import Callable, Iterable, Iterator, Mapping
 
+from .pathfinding import pathfind
+
 
 __all__ = (
     "orthogonals", "diagonals", "directions",
@@ -255,6 +257,10 @@ class Grid[T](Mapping[Point, T]):
         w = self.height
         h = self.width
         return Grid(w, h, lambda x, y: self.get_unchecked((w-y-1, x)))
+
+    def pathfind(self, empty: T, start: Point = (0, 0), end: Point | None = None) -> Iterator[list[Point]]:
+        end = end or (self.width-1, self.height-1)
+        return pathfind(start, lambda p: p == end, lambda p: [(x, 1) for x in Grid.orthogonals(p) if self[x] == empty], lambda p: sum(abs(x - y) for x, y in zip(start, p)))
 
     @classmethod
     def parse(cls: type[Grid], s: str) -> Grid[str]:
