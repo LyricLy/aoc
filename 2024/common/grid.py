@@ -3,9 +3,7 @@ from __future__ import annotations
 import itertools
 import functools
 from collections.abc import Mapping, MappingView, KeysView, ValuesView, ItemsView
-from typing import Callable, Iterable, Iterator, Mapping, overload, TYPE_CHECKING
-
-from .pathfinding import pathfind
+from typing import Callable, Iterable, Iterator, Mapping, overload, TYPE_CHECKING, TypeVar, Generic
 
 
 __all__ = (
@@ -13,6 +11,9 @@ __all__ = (
     "is_normal", "is_orthogonal", "is_diagonal",
     "offset", "invert", "Grid", "SparseGrid",
 )
+
+T = TypeVar("T")
+G = TypeVar("G")
 
 Dir = tuple[int, int]
 Point = tuple[int, int]
@@ -39,8 +40,11 @@ def offset(p: Point, d: Dir) -> Point:
 def invert(d: Dir) -> Dir:
     return -d[0], -d[1]
 
+def taxicab(a: Point, b: Point) -> int:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-class GridView[T](MappingView):
+
+class GridView(Generic[T], MappingView):
     grid: Grid[T]
 
     def __init__(self, grid: Grid[T]) -> None:
@@ -60,14 +64,14 @@ class GridKeys(GridView, KeysView[Point]):
     def __iter__(self) -> Iterator[Point]:
         return iter(self.grid)
 
-class GridValues[T](GridView[T], ValuesView[T]):
+class GridValues(Generic[T], GridView[T], ValuesView[T]):
     def __contains__(self, p: object) -> bool:
         return p in self.grid.data
 
     def __iter__(self) -> Iterator[T]:
         return iter(self.grid.data)
 
-class GridItems[T](GridView[T], ItemsView[Point, T]):
+class GridItems(Generic[T], GridView[T], ItemsView[Point, T]):  # type: ignore
     def __contains__(self, p: object) -> bool:
         match p:
             case tuple((p, v)):
@@ -79,7 +83,7 @@ class GridItems[T](GridView[T], ItemsView[Point, T]):
         return zip(self.grid, self.grid.data)
 
 
-class Grid[T](Mapping[Point, T]):
+class Grid(Generic[T], Mapping[Point, T]):
     data: list[T]
 
     def __init__(self, w: int, h: int, l: T | Callable[[int, int], T] | list[T]):
@@ -207,7 +211,7 @@ class Grid[T](Mapping[Point, T]):
     def items(self) -> GridItems[T]:
         return GridItems(self)
 
-    def map[G](self, f: Callable[[T], G]) -> Grid[G]:
+    def map(self, f: Callable[[T], G]) -> Grid[G]:
         for i, x in enumerate(self.data):
             self.data[i] = f(x)  # type: ignore
         return self  # type: ignore
@@ -281,10 +285,6 @@ class Grid[T](Mapping[Point, T]):
         h = self.width
         return Grid(w, h, lambda x, y: self.get_unchecked((w-y-1, x)))
 
-    def pathfind(self, empty: T, start: Point = (0, 0), end: Point | None = None) -> Iterator[list[Point]]:
-        end = end or (self.width-1, self.height-1)
-        return pathfind(start, lambda p: p == end, lambda p: [(x, 1) for x in Grid.orthogonals(p) if self[x] == empty], lambda p: sum(abs(x - y) for x, y in zip(start, p)))
-
     @staticmethod
     def parse(s: str) -> Grid[str]:
         return Grid.from_list(s.splitlines())
@@ -330,11 +330,11 @@ class Grid[T](Mapping[Point, T]):
     def tile(self) -> SparseGrid[T]:
         return SparseGrid(lambda p: self.get_unchecked((p[0] % self.width, p[1] % self.height)))
 
-    def isolate[G](self, using: G) -> SparseGrid[T | G]:
+    def isolate(self, using: G) -> SparseGrid[T | G]:
         return SparseGrid(lambda _: using, dict(self))
 
 
-class SparseGrid[T](dict[Point, T]):
+class SparseGrid(Generic[T], dict[Point, T]):
     def __init__(self, f: Callable[[Point], T], *args, **kwargs):
         self.f = f
         super().__init__(*args, **kwargs)

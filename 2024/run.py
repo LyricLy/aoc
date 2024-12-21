@@ -1,6 +1,7 @@
 import re
 import datetime
 import os
+import html
 import sys
 import subprocess
 from zoneinfo import ZoneInfo
@@ -17,10 +18,12 @@ session.headers.update({"User-Agent": "https://github.com/LyricLy/aoc (christina
 
 if not os.path.exists("example.txt"):
     s = session.get(f"https://adventofcode.com/{now.year}/day/{now.day}").text
-    regex = r"For example.*?:.*?<pre><code>(.*?)</code></pre>"
-    m = re.search(regex, s, re.DOTALL)
-    with open("example.txt", "w") as f:
-        f.write(m[1])
+    regex = r"For example[^\n]*?:</p>\s*<pre><code>(.*?)</code></pre>"
+    if m := re.search(regex, s, re.DOTALL):
+        with open("example.txt", "w") as f:
+            f.write(html.unescape(m[1]))
+    else:
+        print("no example found, not writing", file=sys.stderr)
 
 if not os.path.exists("input.txt"):
     s = session.get(f"https://adventofcode.com/{now.year}/day/{now.day}/input").text

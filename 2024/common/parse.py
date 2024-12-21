@@ -69,8 +69,8 @@ class Aoc:
         return rs
 
     @property
-    def words(self) -> list[str]:
-        return self.body.split()
+    def strings(self) -> list[str]:
+        return [str(x) for x in self.items]
 
     @property
     def nums(self) -> list[int]:
