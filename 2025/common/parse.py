@@ -83,7 +83,7 @@ class Aoc:
             raise UsageError("must be exactly one number for num")
         return l[0]
 
-    def split(self, sep: str | None) -> list[Aoc]:
+    def split(self, sep: str | None = None) -> list[Aoc]:
         return [Aoc(x) for x in self.body.split(sep)]
 
     def __iter__(self):
